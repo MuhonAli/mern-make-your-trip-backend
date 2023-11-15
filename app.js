@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
@@ -11,11 +12,26 @@ const HttpError = require('./models/http-error');
 
 const app = express();
 
+// Define the list of allowed origins
+const allowedOrigins = ["http://localhost:3000", "https://mern-make-your-trip-app.onrender.com"];
+
+// Configure CORS with the allowed origins
+app.use(cors({
+  origin: function (origin, callback) {
+    // Check if the origin is in the list of allowed origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true
+}));
+
+
 app.use(express.json());
 -app.use(express.urlencoded({extended: false}));
-app.use(cors({
-  origin: ["http://localhost:3000", "https://mern-make-your-trip-app.onrender.com"]
-}))
 
 app.use(bodyParser.json());
 
@@ -56,8 +72,11 @@ app.use((error, req, res, next) => {
 mongoose
   .connect('mongodb+srv://muhon:muhon1234@cluster0.rlg68cz.mongodb.net/places?retryWrites=true&w=majority')
   .then(() => {
-    app.listen(5000); 
-  }) 
+    const port = process.env.PORT || 5000;
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  })
   .catch(err => {
     console.log(err);
-  });
+  }); 
